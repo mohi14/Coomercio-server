@@ -22,11 +22,18 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const laptopsCollection = client.db('coomercio').collection('laptops');
+        const brandsCollection = client.db('coomercio').collection('brands');
 
         app.get('/laptops', async (req, res) => {
             const query = {};
             const laptops = await laptopsCollection.find(query).toArray();
             res.send(laptops);
+        })
+
+        app.get('/brands', async (req, res) => {
+            const query = {};
+            const brands = await brandsCollection.find(query).toArray();
+            res.send(brands);
         })
     }
     finally {
