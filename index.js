@@ -29,6 +29,12 @@ async function run() {
             const laptops = await laptopsCollection.find(query).toArray();
             res.send(laptops);
         })
+        app.get('/category/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { category_Id: id };
+            const laptops = await laptopsCollection.find(filter).toArray();
+            res.send(laptops);
+        })
 
         app.get('/brands', async (req, res) => {
             const query = {};
