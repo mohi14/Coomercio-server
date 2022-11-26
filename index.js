@@ -52,9 +52,26 @@ async function run() {
 
         app.post('/users', async (req, res) => {
             const user = req.body;
+            const filter = {
+                email: user.email,
+            }
+            const alreadySignup = await usersCollection.find(filter).toArray()
+            if (alreadySignup.length) {
+                const message = 'User already sign in'
+                return res.send({ acknowledged: false, message })
+            }
             const result = await usersCollection.insertOne(user);
             res.send(result);
 
+        })
+
+        app.get('/bookings', async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                email: email
+            }
+            const result = await bookingsCollection.find(query).toArray();
+            res.send(result);
         })
 
         app.post('/bookings', async (req, res) => {
@@ -82,6 +99,27 @@ async function run() {
                 return res.send({ coomercioToken: token })
             }
             res.status(403).send({ coomercioToken: '' })
+        })
+
+        app.get('/users/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollection.findOne(query);
+            res.send({ isSeller: user?.role === 'Seller' })
+        })
+
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollection.findOne(query);
+            res.send({ isAdmin: user?.role === 'Admin' })
+        })
+
+        app.get('/users/buyer/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollection.findOne(query);
+            res.send({ isBuyer: user?.role === 'Buyer' })
         })
     }
     finally {
