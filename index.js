@@ -25,6 +25,7 @@ async function run() {
         const brandsCollection = client.db('coomercio').collection('brands');
         const usersCollection = client.db('coomercio').collection('users');
         const bookingsCollection = client.db('coomercio').collection('bookings');
+        const paymentsCollection = client.db('coomercio').collection('payments');
 
         app.get('/laptops', async (req, res) => {
             const query = {};
@@ -106,6 +107,21 @@ async function run() {
                 clientSecret: paymentIntent.client_secret,
             });
         });
+
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id = payment.bookingId;
+            const filter = { _id: ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const updateResult = await bookingsCollection.updateOne(filter, updateDoc)
+            res.send(result)
+        })
 
         app.get('/bookings/:id', async (req, res) => {
             const id = req.params.id;
