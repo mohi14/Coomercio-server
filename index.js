@@ -23,6 +23,8 @@ async function run() {
     try {
         const laptopsCollection = client.db('coomercio').collection('laptops');
         const brandsCollection = client.db('coomercio').collection('brands');
+        const usersCollection = client.db('coomercio').collection('users');
+        const bookingsCollection = client.db('coomercio').collection('bookings');
 
         app.get('/laptops', async (req, res) => {
             const query = {};
@@ -32,14 +34,43 @@ async function run() {
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { category_Id: id };
-            const laptops = await laptopsCollection.find(filter).toArray();
-            res.send(laptops);
+            const products = await laptopsCollection.find(filter).toArray();
+            res.send(products);
         })
 
         app.get('/brands', async (req, res) => {
             const query = {};
             const brands = await brandsCollection.find(query).toArray();
             res.send(brands);
+        })
+
+        app.get('/users', async (req, res) => {
+            const query = {};
+            const users = await usersCollection.find(query).toArray();
+            res.send(users)
+        })
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+
+        })
+
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            const query = {
+                productName: booking.productName,
+                email: booking.email,
+            }
+            const alreadyBooked = await bookingsCollection.find(query).toArray()
+
+            if (alreadyBooked.length) {
+                const message = `You already booked it. Can't book again.`
+                return res.send({ acknowledged: false, message })
+            }
+            const result = await bookingsCollection.insertOne(booking);
+            res.send(result)
         })
     }
     finally {
