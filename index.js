@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
@@ -15,7 +16,7 @@ app.use(cors());
 
 
 
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3dkasq3.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
@@ -26,6 +27,7 @@ async function run() {
         const usersCollection = client.db('coomercio').collection('users');
         const bookingsCollection = client.db('coomercio').collection('bookings');
         const paymentsCollection = client.db('coomercio').collection('payments');
+        const wishlistsCollection = client.db('coomercio').collection('wishlists');
 
         app.get('/laptops', async (req, res) => {
             const query = {};
@@ -79,15 +81,47 @@ async function run() {
             const booking = req.body;
             const query = {
                 productName: booking.productName,
-                email: booking.email,
+                email: booking.email
             }
             const alreadyBooked = await bookingsCollection.find(query).toArray()
 
             if (alreadyBooked.length) {
-                const message = `You already booked it. Can't book again.`
+                const message = `You already booked ${booking.productName}. Can't book it again.`
                 return res.send({ acknowledged: false, message })
             }
             const result = await bookingsCollection.insertOne(booking);
+            res.send(result)
+        })
+
+        app.post('/wishlists', async (req, res) => {
+            const wishlist = req.body;
+            const query = {
+                productName: wishlist.productName,
+                email: wishlist.email
+            }
+            const alreadyWishlisted = await wishlistsCollection.find(query).toArray()
+            if (alreadyWishlisted.length) {
+                const message = `You already added ${wishlist.productName} to your wishlist.`
+                return res.send({ acknowledged: false, message })
+            }
+
+            const result = await wishlistsCollection.insertOne(wishlist);
+            res.send(result)
+        })
+
+        app.get('/wishlists', async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                email: email
+            }
+            const result = await wishlistsCollection.find(query).toArray();
+            res.send(result)
+        })
+
+        app.get('/wishlists/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await wishlistsCollection.findOne(query);
             res.send(result)
         })
 
@@ -120,6 +154,14 @@ async function run() {
                 }
             }
             const updateResult = await bookingsCollection.updateOne(filter, updateDoc)
+
+            const query = {
+                productName: payment.productName,
+                email: payment.email
+            }
+
+            const wishlistUpdatePayment = await wishlistsCollection.updateOne(query, updateDoc)
+
             res.send(result)
         })
 
