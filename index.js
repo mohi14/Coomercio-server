@@ -38,7 +38,11 @@ async function run() {
 
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
-            const filter = { category_Id: id };
+            const filter = {
+                category_Id: id,
+                paid: false
+            };
+
             const products = await laptopsCollection.find(filter).toArray();
             res.send(products);
         })
@@ -165,9 +169,10 @@ async function run() {
             const wishlistUpdatePayment = await wishlistsCollection.updateOne(query, updateDoc)
 
             const productId = payment.productCode;
+            const options = { upsert: true };
 
             const find = { _id: ObjectId(productId) }
-            const productsPaymentUpdate = await laptopsCollection.updateOne(find, updateDoc)
+            const productsPaymentUpdate = await laptopsCollection.updateOne(find, updateDoc, options)
 
             res.send(result)
         })
@@ -227,7 +232,8 @@ async function run() {
 
         app.get('/advertisement', async (req, res) => {
             const query = {
-                advertisement: true
+                advertisement: true,
+                paid: false
             }
             const advertisement = await laptopsCollection.find(query).toArray();
             res.send(advertisement);
