@@ -34,6 +34,8 @@ async function run() {
             const laptops = await laptopsCollection.find(query).toArray();
             res.send(laptops);
         })
+
+
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { category_Id: id };
@@ -162,6 +164,11 @@ async function run() {
 
             const wishlistUpdatePayment = await wishlistsCollection.updateOne(query, updateDoc)
 
+            const productId = payment.productCode;
+
+            const find = { _id: ObjectId(productId) }
+            const productsPaymentUpdate = await laptopsCollection.updateOne(find, updateDoc)
+
             res.send(result)
         })
 
@@ -181,6 +188,49 @@ async function run() {
                 return res.send({ coomercioToken: token })
             }
             res.status(403).send({ coomercioToken: '' })
+        })
+
+        app.post('/laptops', async (req, res) => {
+            const laptop = req.body;
+            const result = await laptopsCollection.insertOne(laptop)
+            res.send(result)
+        })
+
+        app.get('/myProducts', async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                seller_email: email
+            }
+            const result = await laptopsCollection.find(query).toArray()
+            res.send(result)
+        })
+
+        app.delete('/myProducts/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await laptopsCollection.deleteOne(filter);
+            res.send(result)
+        })
+
+        app.put('/advertisement/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    advertisement: true
+                }
+            }
+            const result = await laptopsCollection.updateOne(filter, updateDoc, options)
+            res.send(result)
+        })
+
+        app.get('/advertisement', async (req, res) => {
+            const query = {
+                advertisement: true
+            }
+            const advertisement = await laptopsCollection.find(query).toArray();
+            res.send(advertisement);
         })
 
         app.get('/users/seller/:email', async (req, res) => {
