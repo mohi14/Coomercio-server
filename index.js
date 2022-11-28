@@ -30,6 +30,27 @@ function verifyJWT(req, res, next) {
 }
 
 
+const verifyAdmin = async (req, res, next) => {
+    const decodedEmail = req.decoded.email;
+    const query = { email: decodedEmail }
+    const user = await usersCollection.findOne(query);
+    if (user?.role !== 'Admin') {
+        return res.status(403).send({ message: 'forbidden access' })
+    }
+    next()
+}
+
+const verifySeller = async (req, res, next) => {
+    const decodedEmail = req.decoded.email;
+    const query = { email: decodedEmail }
+    const user = await usersCollection.findOne(query);
+    if (user?.role !== 'Seller') {
+        return res.status(403).send({ message: 'forbidden access' })
+    }
+    next()
+}
+
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3dkasq3.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
@@ -42,25 +63,8 @@ async function run() {
         const paymentsCollection = client.db('coomercio').collection('payments');
         const wishlistsCollection = client.db('coomercio').collection('wishlists');
 
-        const verifyAdmin = async (req, res, next) => {
-            const decodedEmail = req.decoded.email;
-            const query = { email: decodedEmail }
-            const user = await usersCollection.findOne(query);
-            if (user?.role !== 'Admin') {
-                return res.status(403).send({ message: 'forbidden access' })
-            }
-            next()
-        }
 
-        const verifySeller = async (req, res, next) => {
-            const decodedEmail = req.decoded.email;
-            const query = { email: decodedEmail }
-            const user = await usersCollection.findOne(query);
-            if (user?.role !== 'Seller') {
-                return res.status(403).send({ message: 'forbidden access' })
-            }
-            next()
-        }
+
 
         app.get('/laptops', async (req, res) => {
             const query = {};
@@ -167,7 +171,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/buyers', verifyJWT, verifyAdmin, async (req, res) => {
+        app.get('/buyers', async (req, res) => {
             const query = {
                 role: 'Buyer'
             }
@@ -175,21 +179,21 @@ async function run() {
             res.send(buyers);
         })
 
-        app.delete('/buyers/:id', verifyJWT, verifyAdmin, async (req, res) => {
+        app.delete('/buyers/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const result = await usersCollection.deleteOne(filter);
             res.send(result)
         })
 
-        app.get('/bookings', verifyJWT, async (req, res) => {
+        app.get('/bookings', async (req, res) => {
             const email = req.query.email;
 
-            const decodedEmail = req.decoded.email;
+            // const decodedEmail = req.decoded.email;
 
-            if (email !== decodedEmail) {
-                return res.status(403).send({ message: 'forbidden access' });
-            }
+            // if (email !== decodedEmail) {
+            //     return res.status(403).send({ message: 'forbidden access' });
+            // }
 
             const query = {
                 email: email
@@ -332,7 +336,7 @@ async function run() {
             res.send(result)
         })
 
-        app.put('/advertisement/:id', verifyJWT, verifySeller, async (req, res) => {
+        app.put('/advertisement/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const options = { upsert: true };
@@ -345,7 +349,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/advertisement', verifyJWT, verifySeller, async (req, res) => {
+        app.get('/advertisement', async (req, res) => {
             const query = {
                 advertisement: true,
                 paid: false
