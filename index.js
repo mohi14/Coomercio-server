@@ -74,6 +74,66 @@ async function run() {
 
         })
 
+        app.get('/sellers', async (req, res) => {
+            const query = {
+                role: 'Seller'
+            }
+            const sellers = await usersCollection.find(query).toArray();
+            res.send(sellers);
+        })
+
+        app.delete('/sellers/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await usersCollection.deleteOne(filter);
+            res.send(result)
+        })
+
+        // app.put('/sellers/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     const filter = { _id: ObjectId(id) };
+        //     const options = { upsert: true };
+        //     const updateDoc = {
+        //         $set: {
+        //             status: true
+        //         }
+        //     }
+        //     const result = await usersCollection.updateOne(filter, updateDoc, options);
+        //     res.send(result)
+        // })
+        app.put('/sellers/:id', async (req, res) => {
+            const email = req.params.id;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    status: true
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+
+            const query = {
+                seller_email: email
+            }
+            const update = {
+                $set: {
+                    sellerVerified: true
+                }
+            }
+            const sellerVerification = await laptopsCollection.updateMany(query, update)
+
+            res.send(result)
+        })
+
+        app.get('/sellers/:id', async (req, res) => {
+            const email = req.params.id;
+            const query = {
+                email: email
+            }
+            const result = await usersCollection.findOne(query)
+            res.send(result)
+        })
+
         app.get('/bookings', async (req, res) => {
             const email = req.query.email;
             const query = {
